@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+html(lang="en")
+    head
+        meta(charset="UTF-8")
+        meta(name="viewport", content="width=device-width, initial-scale=1.0")
+        title Courses
+    body
+        courses
+        form(action="/api/v1/courses", method="post")
+            label(for="") Name
+            input(type="text", name='name')
+            label(for="") Price
+            input(type="text", name='price')
+            label(for="") Requirements
+            input(type="text", name='requirements')
+            label(for="") Description
+            input(type="text", name='description')
+            label(for="") Prerequisites
+            input(type="text", name='prerequisites')
+            label(for="") Discount
+            input(type="text" name='discount')
+            label(for="") Objectives
+            input(type="text", name='objectives')
+            label(for="") Length
+            input(type="text", name='length')
+            button Submit
