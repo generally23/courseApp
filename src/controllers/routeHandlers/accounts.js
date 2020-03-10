@@ -5,7 +5,7 @@ const Account = require('../../models/accountModel');
 const captureAsyncError = require('../utils/captureAsyncErrors');
 const ApplicationError = require('../utils/AppError');
 
-const signToken = id => jwt.sign({ id }, 'secret');
+const signToken = id => jwt.sign({ id }, process.env.JWT_SECRET);
 
 const setCookie = (name, value, res) => {
   res.cookie(name, value, {
@@ -148,4 +148,9 @@ exports.updateInformation = captureAsyncError(async (req, res, next) => {
   filterProperties.forEach(prop => (account[prop] = req.body[prop]));
   await account.save();
   res.json(account);
+});
+
+exports.uploadProfileImage = captureAsyncError(async (req, res, next) => {
+  console.log(req.file);
+  res.send('hello');
 });

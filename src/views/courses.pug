@@ -24,3 +24,7 @@ html(lang="en")
             label(for="") Length
             input(type="text", name='length')
             button Submit
+        form(action="/upload", method='post', enctype='multipart/form-data')
+            input(type="file", name="fichier")
+            button Submit
+

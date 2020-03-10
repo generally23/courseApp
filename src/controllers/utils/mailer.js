@@ -7,9 +7,7 @@ class Mailer {
     this.subject = subject;
     this.text = text;
 
-    sg.setApiKey(
-      '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'
-    );
+    sg.setApiKey(process.env.SENDGRID_API_KEY);
   }
   async send() {
     const { from, to, subject, text, html } = this;

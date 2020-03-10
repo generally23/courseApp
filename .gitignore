@@ -3,4 +3,5 @@ build
 webpack.config.js
 .vscode
 package-lock.json
-.gitignore
+.env
+uploads

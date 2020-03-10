@@ -15,7 +15,7 @@ module.exports = captureAsyncError(async (req, res, next) => {
   }
   const decodedToken = jwt.verify(
     encodedToken.replace('Bearer ', ''),
-    'secret'
+    process.env.JWT_SECRET
   );
   const account = await Account.findById(decodedToken.id);
   if (!account) {

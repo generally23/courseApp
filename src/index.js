@@ -7,6 +7,7 @@ const cookieParser = require('cookie-parser');
 const courseRouterApi = require('./routes/api/courses');
 const accountRouterApi = require('./routes/api/accounts');
 const courseRouterSite = require('./routes/site');
+require('dotenv').config();
 
 // initalize app
 const app = express();
@@ -22,18 +23,14 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 
-// setup routers
+// routers
 app.use(courseRouterSite);
 app.use('/api/v1/courses', courseRouterApi);
 app.use('/api/v1/accounts', accountRouterApi);
-
-app.options('/op', (req, res) => {
-  console.log(req.headers);
-  res.send('yes');
-});
 
 // error handling middleware
 app.use(unroutableErrorHandler);
 app.use(errorHandler);
 
+// listen on port default http port 80
 app.listen(80);
