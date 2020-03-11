@@ -4,6 +4,7 @@ html(lang="en")
         meta(charset="UTF-8")
         meta(name="viewport", content="width=device-width, initial-scale=1.0")
         title Courses
+        link(rel="stylesheet", href="/style.css")
     body
         courses
         form(action="/api/v1/courses", method="post")
@@ -28,3 +29,5 @@ html(lang="en")
             input(type="file", name="fichier")
             button Submit
 
+        div.progressbar
+        script(src="/index.js")
