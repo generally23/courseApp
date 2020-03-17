@@ -1,16 +1,30 @@
-const { Router } = require('express');
+const {
+    Router
+} = require( 'express' );
 
-const router = Router();
+const router = Router( {
+    mergeParams: true
+} );
+
+const {
+    createLecture,
+    fetchLectures,
+    fetchLecture,
+    updateLecture,
+    deleteLecture,
+    deleteLectures
+} = require( '../../controllers/routeHandlers/lectures' );
 
 router
-  .route('/')
-  .get()
-  .post();
+    .route( '/' )
+    .get( fetchLectures )
+    .post( createLecture )
+    .delete( deleteLectures )
 
 router
-  .route('/:lectureId')
-  .get()
-  .patch()
-  .delete();
+    .route( '/:lectureId' )
+    .get( fetchLecture )
+    .patch( updateLecture )
+    .delete( deleteLecture );
 
 module.exports = router;

@@ -1,1 +1,1 @@
-module.exports = (err, res) => {};
+module.exports = ( err, res ) => {};

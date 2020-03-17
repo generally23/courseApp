@@ -19,6 +19,10 @@ const accountSchema = Schema({
     type: String,
     required: [true, 'An account must have have a password']
   },
+  profileImage: {
+    type: String,
+    default: 'defaulturl'
+  },
   role: {
     type: String,
     enum: ['student', 'admin'],

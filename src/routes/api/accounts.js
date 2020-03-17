@@ -1,5 +1,7 @@
 const { Router } = require('express');
-
+const router = Router(); // merge params option
+const authenticate = require('../../controllers/authHandlers/authenticate');
+const { resolve } = require('path')
 const {
   signup,
   signin,
@@ -9,18 +11,18 @@ const {
   changePassword,
   getAccount,
   updateInformation,
-  uploadProfileImage
+  uploadProfileImage,
+  updateProfileImage
 } = require('../../controllers/routeHandlers/accounts');
-const authenticate = require('../../controllers/authHandlers/authenticate');
-
-const router = Router(); // merge params option
 
 const multer = require('multer');
 
 const storage = multer.diskStorage({
-  destination: 'uploads',
-  filename(req, f, cb) {
-    cb(null, f.originalname + '-file');
+  destination: resolve(__dirname, '..', '..', 'uploads'),
+  filename(req, file, cb) {
+    const fileParts = file.originalname.split('.');
+    const ext = fileParts[fileParts.length - 1];
+    cb(null, `${fileParts[0]}-${req.user.id}.${ext}`);
   }
 });
 
@@ -42,6 +44,8 @@ router.post('/change-password', authenticate, changePassword);
 
 router.patch('/update-my-account', authenticate, updateInformation);
 
-router.post('/upload-profile', upload.single('fichier'), uploadProfileImage);
+router.post('/upload-profile', authenticate, upload.single('profile'), uploadProfileImage);
+
+router.patch('/update-profile', authenticate, upload.single('profile'), updateProfileImage)
 
 module.exports = router;
