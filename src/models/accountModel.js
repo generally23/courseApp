@@ -1,47 +1,72 @@
 const { Schema, model } = require('mongoose');
 const { hash, compare } = require('bcrypt');
 const crypto = require('crypto');
+const { deleteObjectProperties } = require('../utils');
 
-const accountSchema = Schema({
-  firstname: {
-    type: String,
-    required: [true, 'An account must have have a first name']
+const accountSchema = new Schema(
+  {
+    firstname: {
+      type: String,
+      required: [true, 'An account must have have a first name'],
+      minlength: [2, 'A first name must be greater than 3 character'],
+    },
+    lastname: {
+      type: String,
+      required: [true, 'An account must have have a last name'],
+      minlength: [2, 'A last name must be greater than 3 character'],
+    },
+    email: {
+      type: String,
+      required: [true, 'An account must have have an email'],
+    },
+    purchases: [
+      {
+        type: Schema.Types.ObjectId,
+        ref: 'Purchase',
+      },
+    ],
+    password: {
+      type: String,
+      required: [true, 'An account must have have a password'],
+      minlength: [8, 'A seucure password must be at least 8 characters'],
+      select: false,
+    },
+    profileImage: {
+      type: String,
+      default: 'https://source.unsplash.com/random',
+    },
+    role: {
+      type: String,
+      enum: ['student', 'admin'],
+      default: 'student',
+    },
+    resetToken: {
+      type: String,
+      select: false,
+    },
+    passwordChangedAt: {
+      type: Date,
+      select: false,
+    },
+    resetTokenExpiresIn: {
+      type: Date,
+      select: false,
+    },
+    cart: [
+      {
+        type: Schema.Types.ObjectId,
+        ref: 'Course',
+      },
+    ],
   },
-  lastname: {
-    type: String,
-    required: [true, 'An account must have have a last name']
-  },
-  email: {
-    type: String,
-    required: [true, 'An account must have have an email']
-  },
-  password: {
-    type: String,
-    required: [true, 'An account must have have a password']
-  },
-  profileImage: {
-    type: String,
-    default: 'defaulturl'
-  },
-  role: {
-    type: String,
-    enum: ['student', 'admin'],
-    default: 'student'
-  },
-  passwordResetToken: {
-    type: String
-  },
-  passwordChangedAt: {
-    type: Date
-  },
-  resetTokenExpiresIn: {
-    type: Date
-  }
-});
+  { timestamps: true }
+);
+
+// virtuals
 
 // middleware
 
-accountSchema.pre('save', async function(next) {
+accountSchema.pre('save', async function (next) {
   const account = this;
   if (!account.isModified('password')) return next();
   account.password = await hash(account.password, 12);
@@ -50,11 +75,11 @@ accountSchema.pre('save', async function(next) {
 
 // instance methods
 
-accountSchema.methods.verifyPassword = async function(password) {
+accountSchema.methods.verifyPassword = async function (password = '') {
   return await compare(password, this.password);
 };
 
-accountSchema.methods.generatePasswordResetToken = function() {
+accountSchema.methods.generatePasswordResetToken = async function () {
   // generate random bytes
   const resetToken = crypto.randomBytes(32).toString('hex');
   // hash bytes
@@ -64,20 +89,26 @@ accountSchema.methods.generatePasswordResetToken = function() {
     .digest('hex');
 
   // store hashed reset token
-  this.passwordResetToken = hashedToken;
+  this.resetToken = hashedToken;
   // update
   this.resetTokenExpiresIn = Date.now() + 3600000;
   // save changes to DB
-  this.save();
+  await this.save();
   // return unhashed token
   return resetToken;
 };
 
-accountSchema.methods.accountChangedPasswordAfterTokenIssued = function(
+accountSchema.methods.accountChangedPasswordAfterTokenIssued = function (
   tokenIssueDate
 ) {
   if (!this.passwordChangedAt) return;
   return this.passwordChangedAt.getTime() < tokenIssueDate;
+};
+
+accountSchema.methods.toJSON = function () {
+  const userObject = this.toObject();
+  deleteObjectProperties(userObject, 'password', '__v');
+  return userObject;
 };
 
 module.exports = model('Account', accountSchema);

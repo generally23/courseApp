@@ -1,74 +1,104 @@
-const {
-    Schema,
-    model
-} = require( 'mongoose' );
+const { Schema, model } = require('mongoose');
+const { deleteObjectProperties } = require('../utils');
+const sectionSchema = require('../models/sectionModel');
 
-const courseSchema = new Schema( {
+const courseSchema = new Schema(
+  {
     name: {
-        type: String,
-        required: true,
+      type: String,
+      required: [true, 'A course must have a name'],
+      lowercase: true,
     },
     description: {
-        type: String,
-        required: true
+      type: String,
+      required: [true, 'A course must have a description'],
     },
     poster: {
-        type: String
+      type: String,
+      default: 'https://source.unsplash.com/random',
     },
-    author: {
-        type: Schema.Types.ObjectId,
-        ref: 'Account'
-        //required: true
+    authorId: {
+      type: Schema.Types.ObjectId,
+      ref: 'Account',
+      required: [true, 'A course must have an author'],
     },
     price: {
-        type: Number,
-        required: true
+      type: Number,
+      required: [true, 'A course must have a price'],
     },
     discount: {
-        type: Number,
-        required: true,
-        default: 0
+      type: Number,
+      default: 0,
     },
     requirements: {
-        type: String,
-        required: true
+      type: String,
+      required: [true, 'A course must have requirements'],
     },
     prerequisites: {
-        type: String,
-        required: true
-    },
-    creation_date: {
-        type: Date,
-        default: Date.now(),
-        required: true
-    },
-    update_date: {
-        type: Date,
-        default: Date.now(),
-        required: true
+      type: String,
+      required: [true, 'A course must have prerequisites'],
     },
     published: {
-        type: Boolean,
-        default: false,
-        required: true
+      type: Boolean,
+      default: false,
     },
     length: {
-        type: Number
+      type: Number,
+      required: [true, 'A course must have a length or duration'],
+      minlength: [1, 'A course should at least be one hour long'],
+      maxlength: [50, 'A course must be less than 50 hours long'],
     },
     objectives: {
-        type: String,
-        required: true
-    }
-} );
+      type: String,
+      required: [true, 'A course must have objectives or goals'],
+    },
+    category: {
+      type: String,
+      required: [true, 'A course must have a category'],
+      lowercase: true,
+    },
+    language: {
+      type: String,
+      default: 'English US',
+      lowercase: true,
+    },
+    sections: [sectionSchema],
+  },
+  { timestamps: true, toJSON: { virtuals: true }, toObject: { virtuals: true } }
+);
 
+// indexes
 
-courseSchema.index( {
-    name: 'text'
-} )
+// virtuals
 
-const Course = model( 'Course', courseSchema );
+courseSchema.virtual('author', {
+  ref: 'Account',
+  localField: 'authorId',
+  foreignField: '_id',
+  justOne: true,
+});
+
+courseSchema.virtual('reviews', {
+  ref: 'Review',
+  localField: '_id',
+  foreignField: 'reviewedCourseId',
+});
+
+// middlware
+
+courseSchema.pre('remove', async function (next) {
+  await Section.deleteMany({ courseId: this.id });
+  next();
+});
+
+// instances
+
+courseSchema.methods.toJSON = function () {
+  const courseObject = this.toObject();
+  deleteObjectProperties(courseObject, '__v', 'id');
+  return courseObject;
+};
+
+const Course = model('Course', courseSchema);
 
 module.exports = Course;
-
-
-console.log( courseSchema.query )

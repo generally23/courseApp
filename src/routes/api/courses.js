@@ -1,27 +1,37 @@
 const { Router } = require('express');
-
+const authenticate = require('../../controllers/authHandlers/authenticate');
+const sectionRouter = require('./sections');
+const reviewRouter = require('./reviews');
 const {
   fetchCourses,
   createCourse,
   updateCourse,
-  deleteCourse
+  deleteCourse,
+  deleteAllCourses,
+  deleteMyCourses,
+  fetchCourse,
 } = require('../../controllers/routeHandlers/courses');
 
 const router = Router();
 
-const sectionRouterApi = require('./sections');
-
 router
   .route('/')
   .get(fetchCourses)
-  .post(createCourse);
+  .post(authenticate, createCourse)
+  .delete(authenticate, deleteAllCourses);
+
+// router.post('/upload-poster')
+
+router.delete('/delete-my-courses', authenticate, deleteMyCourses);
 
 router
   .route('/:courseId')
-  .get((req, res) => res.send('hello'))
-  .patch(updateCourse)
-  .delete(deleteCourse);
+  .get(fetchCourse)
+  .patch(authenticate, updateCourse)
+  .delete(authenticate, deleteCourse);
 
-router.use('/:courseId/sections', sectionRouterApi);
+router.use('/:courseId/sections', sectionRouter);
+
+router.use('/:courseId/reviews', reviewRouter);
 
 module.exports = router;

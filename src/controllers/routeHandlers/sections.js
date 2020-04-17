@@ -1,112 +1,122 @@
-const ApplicationError = require( '../../utils/AppError' );
-const captureAsyncError = require( '../../utils/captureAsyncErrors' );
-const Section = require( '../../models/sectionModel' );
-const Course = require( '../../models/courseModel' );
+const ApplicationError = require('../../utils/AppError');
+const captureAsyncError = require('../../utils/captureAsyncErrors');
+const Section = require('../../models/sectionModel');
+const Course = require('../../models/courseModel');
+const { assign } = require('../../utils');
 
-exports.createCourseSection = captureAsyncError( async ( req, res, next ) => {
-    const {
-        courseId
-    } = req.params;
-    const {
-        name,
-        duration
-    } = req.body;
+exports.createCourseSection = captureAsyncError(async (req, res, next) => {
+  const { courseId } = req.params;
+  const { name, duration } = req.body;
+  // try to find the course to create a section for
+  const course = await Course.findById(courseId);
+  // send an error if no course was found
+  if (!course) {
+    return next(
+      new ApplicationError(
+        'The course you are trying to create a section for does not exist',
+        404
+      )
+    );
+  }
+  // embed the section to inside the course document
+  course.sections = [...course.sections, req.body];
+  // resave changes to the Db
+  await course.save();
+  // respond to the client with the new created section
+  res.status(201).json();
+});
 
-    const newSection = await Section.create( {
-        name,
-        duration,
-        course_id: courseId
-    } );
+// exports.fetchCourseSections = captureAsyncError(async (req, res, next) => {
+//   const sections = await Section.find({
+//     courseId: req.params.courseId,
+//   });
+//   res.json(sections);
+// });
 
-    res.status( 201 )
-        .json( newSection );
-} );
+// exports.fetchCourseSection = captureAsyncError(async (req, res, next) => {
+//   const { courseId, sectionId } = req.params;
 
-exports.fetchCourseSections = captureAsyncError( async ( req, res, next ) => {
-    const sections = await Section.find( {
-        course_id: req.params.courseId
-    } );
-    res.json( sections );
-} );
+//   const course = await Course.findById(courseId);
 
-exports.fetchCourseSection = captureAsyncError( async ( req, res, next ) => {
-    const {
-        courseId,
-        sectionId
-    } = req.params;
+//   if (!course) {
+//     return next(
+//       new ApplicationError(
+//         'Cannot find a section for an unexisting course',
+//         404
+//       )
+//     );
+//   }
 
-    const course = await Course.findById( courseId );
+//   const section = await Section.findById(sectionId);
 
-    if ( !course ) {
-        return next(
-            new ApplicationError(
-                'Cannot find a section for an unexisting course',
-                404
-            )
-        );
-    }
+//   if (!section) {
+//     return next(new ApplicationError('Cannot find section', 404));
+//   }
 
-    const section = await Section.findById( sectionId );
+//   res.json(section);
+// });
 
-    if ( !section ) {
-        return next( new ApplicationError( 'Cannot find section', 404 ) );
-    }
+exports.updateCourseSection = captureAsyncError(async (req, res, next) => {
+  const { courseId, sectionId } = req.params;
+  const { name, duration } = req.body;
 
-    res.json( section );
-} );
+  const course = await Course.findById(courseId);
 
-exports.updateCourseSection = captureAsyncError( async ( req, res, next ) => {
-    const {
-        courseId,
-        sectionId
-    } = req.params;
-    const {
-        name,
-        duration
-    } = req.body;
-    const course = await Course.findById( courseId );
-    if ( !course ) {
-        return next( new ApplicationError( 'Cannot find course to update a section for', 404 ) );
-    }
-    const section = await Section.findById( sectionId );
-    if ( !section ) {
-        return next(
-            new ApplicationError(
-                "Failed to update. Section was not found",
-                404
-            )
-        );
-    }
-    section.name = name
-    section.duration = duration ? duration : section.duration;
-    await section.save();
-    res.json( section );
-} );
+  if (!course) {
+    return next(
+      new ApplicationError('Cannot find course to update a section for', 404)
+    );
+  }
 
-exports.deleteCourseSection = captureAsyncError( async ( req, res, next ) => {
-    const {
-        courseId,
-        sectionId
-    } = req.params;
-    const course = await Course.findById( courseId );
+  const { sections } = course;
 
-    if ( !course ) {
-        return next( new ApplicationError( 'A section cannot be deleted', 404 ) );
-    }
+  const targetSection = sections.find(section => section._id.equals(sectionId));
 
-    const section = await Section.findById( sectionId );
-    if ( !section ) {
-        return next(
-            new ApplicationError(
-                "A section cannot be deleted if it doesn't exist",
-                404
-            )
-        );
-    }
+  if (!targetSection) {
+    return next(
+      new ApplicationError(
+        'The section you are trying to update was not found',
+        404
+      )
+    );
+  }
+  // make the updates
+  assign({ name, duration }, targetSection);
+  // resave changes to the DB
+  await course.save();
+  // respond to the client with the updated section
+  res.json(targetSection);
+});
 
-    Section.deleteOne( {
-        _id: section._id
-    } )
+exports.deleteCourseSection = captureAsyncError(async (req, res, next) => {
+  const { courseId, sectionId } = req.params;
+  const course = await Course.findById(courseId);
 
-    res.json( section );
-} );
+  if (!course) {
+    return next(
+      new ApplicationError(
+        'This course to delte a section for does not exist',
+        404
+      )
+    );
+  }
+
+  const { sections } = course;
+
+  const targetSection = sections.find(section => section._id.equals(sectionId));
+
+  if (!targetSection) {
+    return next(
+      new ApplicationError(
+        'The section you are trying to delete was not found',
+        404
+      )
+    );
+  }
+  // delete the section
+  course.sections = sections.filter(section => !section._id.equals(sectionId));
+  // resave changes to DB
+  await course.save();
+  // respond back to client
+  res.status(204).json();
+});

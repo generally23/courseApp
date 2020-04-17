@@ -1,7 +1,6 @@
 class ApplicationError extends Error {
-  constructor(msg, statusCode) {
-    super();
-    this.msg = msg;
+  constructor(message, statusCode = 500) {
+    super(message);
     this.statusCode = statusCode;
     this.isOperational = true;
     Error.captureStackTrace(this, this.constructor);

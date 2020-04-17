@@ -1,43 +1,36 @@
-const express = require( 'express' );
-const {
-    resolve
-} = require( 'path' );
-const {
-    establishDbConnection
-} = require( './configuration' );
-const unroutableErrorHandler = require( './controllers/errorHandlers/unroutableErrorHandler' );
-const errorHandler = require( './controllers/errorHandlers/globalErrorHandler' );
-const cookieParser = require( 'cookie-parser' );
-const courseRouterApi = require( './routes/api/courses' );
-const accountRouterApi = require( './routes/api/accounts' );
-const courseRouterSite = require( './routes/site' );
-require( 'dotenv' )
-    .config();
+const express = require('express');
+const unroutableErrorHandler = require('./controllers/errorHandlers/unroutableErrorHandler');
+const errorHandler = require('./controllers/errorHandlers/globalErrorHandler');
+const courseRouter = require('./routes/api/courses');
+const accountRouter = require('./routes/api/accounts');
+const siteRouter = require('./routes');
 
-// initalize app
-const app = express();
-app.set( 'view engine', 'pug' );
-app.set( 'views', resolve( __dirname, 'views' ) );
+const {
+  establishDbConnection,
+  setUpMiddleware,
+  setupExpressConfigurtion,
+} = require('./configuration');
+
+require('dotenv').config();
+
+// initalize server
+const server = express();
+setupExpressConfigurtion(server);
 
 // connect to mongoDB
 establishDbConnection();
 
 // setup middleware
-app.use( express.static( resolve( __dirname, 'public' ) ) );
-app.use( express.json() );
-app.use( express.urlencoded( {
-    extended: true
-} ) );
-app.use( cookieParser() );
+setUpMiddleware(server);
 
 // routers
-app.use( courseRouterSite );
-app.use( '/api/v1/courses', courseRouterApi );
-app.use( '/api/v1/accounts', accountRouterApi );
+server.use(siteRouter);
+server.use('/api/v1/courses', courseRouter);
+server.use('/api/v1/accounts', accountRouter);
 
 // error handling middleware
-app.use( unroutableErrorHandler );
-app.use( errorHandler );
+server.use(unroutableErrorHandler);
+server.use(errorHandler);
 
 // listen on port default http port 80
-app.listen( 80 );
+server.listen(80);

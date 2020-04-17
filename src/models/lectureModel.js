@@ -1,23 +1,23 @@
-const {
-    Schema,
-    model
-} = require( 'mongoose' );
+const { Schema, model } = require('mongoose');
 
-const lectureSchema = Schema( {
+const lectureSchema = Schema(
+  {
     name: {
-        type: String,
-        required: [ true, 'A lecture must have a name' ]
+      type: String,
+      required: [true, 'A lecture must have a name'],
     },
-    transcripts: [ String ],
+    transcripts: [String],
     sources: {
-        type: [ String ],
-        required: [ true, 'A lecture must have at least one video source' ]
+      type: [String],
+      required: [true, 'A lecture must have at least one video source'],
     },
-    section_id: {
-        type: Schema.Types.ObjectId,
-        ref: 'Section',
-        required: [ true, 'A lecture must be in a section' ]
-    }
-} )
+    sectionId: {
+      type: Schema.Types.ObjectId,
+      ref: 'Section',
+      required: [true, 'A lecture must be in a section'],
+    },
+  },
+  { timestamps: true }
+);
 
-module.exports = model( 'Lecture', lectureSchema );
+module.exports = lectureSchema;
